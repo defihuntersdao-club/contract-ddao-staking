@@ -1,6 +1,6 @@
 /* ============================================= DEFI HUNTERS DAO ================================================================
                                            https://defihuntersdao.club/                                                                                                             
------------------------------------------------------- May 2022 ------------------------------------------------------------------
+------------------------------------------------------ May 20225 ------------------------------------------------------------------
 #######    #######    ######       ####                  ######   #########  ######    #####  #### ########  ###   #####   #######  
  ##   ###   ##   ###     ###      ### ###               ### ###   #  ##  ##     ###      #    ###      #      ###    ##  ###   ###  
  ##    ##   ##    ##    ## ##    ##     ##             ##     #   #  ##  ##    ## ##     #  ###        #      ####   ##  ##     ##  
@@ -30,7 +30,7 @@ interface IToken
     function totalSupply() external view  returns (uint256);
 }
 
-contract stake is AccessControl
+contract DDAOStaking is AccessControl
 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -46,7 +46,7 @@ contract stake is AccessControl
 	Admins.push(_msgSender());
 	AdminAdd(0x208b02f98d36983982eA9c0cdC6B3208e0f198A3);
 
-        uint256 public StakeTime = 3 * 86400;
+        StakeTime = 5 * 86400;
 //        StakeTime = 5 *3600;
 
 	    if(block.chainid == 137)
@@ -269,5 +269,12 @@ contract stake is AccessControl
         if(level == 3)return level3;
         return 0;
     }
-
+    function StakersCount()public view returns(uint256)                                                                                                                                 
+    {                                                                                                                                                                                   
+        return Users.length;                                                                                                                                                            
+    }                                                                                                                                                                                   
+    function StakersList()public view returns(address[] memory)                                                                                                                         
+    {                                                                                                                                                                                   
+        return Users;                                                                                                                                                                   
+    }                   
 }
