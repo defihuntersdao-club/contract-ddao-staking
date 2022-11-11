@@ -1,6 +1,6 @@
 /* ============================================= DEFI HUNTERS DAO ================================================================
                                            https://defihuntersdao.club/                                                                                                             
------------------------------------------------------- May 2022 ------------------------------------------------------------------
+------------------------------------------------ 11 november 2022 ----------------------------------------------------------------
 #######    #######    ######       ####                  ######   #########  ######    #####  #### ########  ###   #####   #######  
  ##   ###   ##   ###     ###      ### ###               ### ###   #  ##  ##     ###      #    ###      #      ###    ##  ###   ###  
  ##    ##   ##    ##    ## ##    ##     ##             ##     #   #  ##  ##    ## ##     #  ###        #      ####   ##  ##     ##  
@@ -19,6 +19,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+interface ITxs
+{
+    function TxsAdd(address addr,uint256 amount,string memory name,uint256 id1,uint256 id2)external returns(uint256);
+    function TxsCount(address addr)external returns(uint256);
+    function EventAdd(uint256 txcount,address addr,uint256 user_id,uint256 garden,uint256 level,uint256 amount,string memory name)external returns(uint256);
+
+}
 interface IToken
 {
     function approve(address spender,uint256 amount)external;
@@ -35,6 +42,7 @@ contract DDAOStaking is AccessControl
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+	address public taddr;
 	address[] public Users;
 	address public TokenAddress;
 	uint256 public StakeTime;
@@ -114,6 +122,11 @@ contract DDAOStaking is AccessControl
         IERC20 ierc20Token = IERC20(tokenAddress);
         ierc20Token.safeTransfer(_msgSender(), amount);
     }
+    function TxsAddrChange(address addr)public onlyAdmin
+    {
+	require(taddr != addr,"This address already set");
+	tadrr = addr;
+    }
     // End: Admin functions
 
     function AddCoin()public payable returns(bool)
@@ -181,6 +194,10 @@ contract DDAOStaking is AccessControl
 
 	IERC20(TokenAddress).safeTransferFrom(_msgSender(),address(this), amount);
 	emit StakeLog("stake",addr,StakeWal[addr].time,StakeWal[addr].amount,StakeWal[addr].frozen,StakeWal[addr].unlock);
+    
+        uint256 tx_id = ITxs(taddr).TxsAdd(addr,amount,"Stake",0,0);
+        ITxs(taddr).EventAdd(tx_id,addr,0,1,0,amount,"Staked");
+
     }
     function Stake(uint256 amount)public
     {
@@ -203,6 +220,8 @@ contract DDAOStaking is AccessControl
 	    StakeCount = StakeCount.add(1);
 	}
 	emit StakeLog("unstake",addr,StakeWal[addr].time,StakeWal[addr].amount,StakeWal[addr].frozen,StakeWal[addr].unlock);
+        uint256 tx_id = ITxs(taddr).TxsAdd(addr,amount,"Untake",0,0);
+        ITxs(taddr).EventAdd(tx_id,addr,0,1,0,amount,"Unstaked");
 
     }
     /**
