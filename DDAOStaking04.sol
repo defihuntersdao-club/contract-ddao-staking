@@ -179,7 +179,7 @@ contract DDAOStaking is AccessControl
         you can perform actions from one address that are not related to withdrawals.
         !!! Important: If the sender of this transaction stakes for an address that does not belong to him, access to the tokens is lost forever.
         **/
-    function Stake(address addr,uint256 amount)public returns(uint256)
+    function Stake(address addr,uint256 amount)public
     {
 
 	uint256 t;
@@ -205,7 +205,7 @@ contract DDAOStaking is AccessControl
     
         uint256 tx_id = ITxs(TxAddr).TxsAdd(addr,amount,"Stake",0,0);
         ITxs(TxAddr).EventAdd(tx_id,addr,0,1,0,amount,"Staked");
-
+	
     }
     function Stake(uint256 amount)public
     {
