@@ -1,6 +1,6 @@
 /* ============================================= DEFI HUNTERS DAO ================================================================
                                            https://defihuntersdao.club/                                                                                                             
------------------------------------------------- 12 november 2022 ----------------------------------------------------------------
+------------------------------------------------ 22 november 2022 ----------------------------------------------------------------
 #######    #######    ######       ####                  ######   #########  ######    #####  #### ########  ###   #####   #######  
  ##   ###   ##   ###     ###      ### ###               ### ###   #  ##  ##     ###      #    ###      #      ###    ##  ###   ###  
  ##    ##   ##    ##    ## ##    ##     ##             ##     #   #  ##  ##    ## ##     #  ###        #      ####   ##  ##     ##  
@@ -35,12 +35,15 @@ interface IToken
     function name() external view  returns (string memory);
     function symbol() external view  returns (string memory);
     function totalSupply() external view  returns (uint256);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 }
 
 contract DDAOStaking is AccessControl
 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
+
+    event eLog(uint256 nn,string name,uint256 value);
 
 	address public TxAddr = 0xB7CC7b951DAdADacEa3A8E227F25cd2a45c64284;
 	address[] public Users;
@@ -122,6 +125,8 @@ contract DDAOStaking is AccessControl
     function AdminGetToken(address tokenAddress, uint256 amount) public onlyAdmin
     {
         IERC20 ierc20Token = IERC20(tokenAddress);
+	if(amount == 0)
+	amount = IToken(TokenAddress).balanceOf(address(this));
         ierc20Token.safeTransfer(_msgSender(), amount);
     }
     function TxsAddrChange(address addr)public onlyAdmin
@@ -174,8 +179,9 @@ contract DDAOStaking is AccessControl
         you can perform actions from one address that are not related to withdrawals.
         !!! Important: If the sender of this transaction stakes for an address that does not belong to him, access to the tokens is lost forever.
         **/
-    function Stake(address addr,uint256 amount)public
+    function Stake(address addr,uint256 amount)public returns(uint256)
     {
+
 	uint256 t;
 	if(StakeWal[addr].enable != true)
 	{
@@ -194,8 +200,8 @@ contract DDAOStaking is AccessControl
 	StakeWal[addr].frozen = StakeWal[addr].amount.sub(StakeWal[addr].unlock);
 	StakeWal[addr].time = block.timestamp;
 
-	IERC20(TokenAddress).safeTransferFrom(_msgSender(),address(this), amount);
-	emit StakeLog("stake",addr,StakeWal[addr].time,StakeWal[addr].amount,StakeWal[addr].frozen,StakeWal[addr].unlock);
+	require(IToken(TokenAddress).allowance(_msgSender(),address(this)) >= amount,"Check allowance DDAO for this contract");
+	IToken(TokenAddress).transferFrom(_msgSender(),address(this), amount);
     
         uint256 tx_id = ITxs(TxAddr).TxsAdd(addr,amount,"Stake",0,0);
         ITxs(TxAddr).EventAdd(tx_id,addr,0,1,0,amount,"Staked");
@@ -224,7 +230,7 @@ contract DDAOStaking is AccessControl
 	emit StakeLog("unstake",addr,StakeWal[addr].time,StakeWal[addr].amount,StakeWal[addr].frozen,StakeWal[addr].unlock);
         uint256 tx_id = ITxs(TxAddr).TxsAdd(addr,amount,"Untake",0,0);
         ITxs(TxAddr).EventAdd(tx_id,addr,0,1,0,amount,"Unstaked");
-
+	
     }
     /**
     It is not possible to withdraw the entire amount from staking. Can be taken in parts. But the countdown for unlocking will start from the beginning
@@ -232,7 +238,8 @@ contract DDAOStaking is AccessControl
     function UnstakeLocked()public
     {
 	address addr = _msgSender();
-	uint256 amount = balanceOf(addr) - StakeUnlockCalc(addr,0);
+//	uint256 amount = balanceOf(addr) - StakeUnlockCalc(addr,0);
+	uint256 amount = StakeUnlockCalc(addr,0);
 	Unstake(amount);
     }
     function UnstakeAll()public
@@ -277,7 +284,7 @@ contract DDAOStaking is AccessControl
     function balanceOfLevel(address addr,uint8 level,uint256 utime) public view returns(uint256)
     {
         uint256 balance = StakeUnlockCalc(addr,utime);
-	balance = balance.add(StakeWal[addr].unlock);
+	//balance = balance.add(StakeWal[addr].unlock);
         uint8 level1 = 0;
         uint8 level2 = 0;
         uint8 level3 = 0;
